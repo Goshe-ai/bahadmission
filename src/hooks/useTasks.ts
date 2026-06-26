@@ -216,8 +216,12 @@ export function useConfirmTask() {
       if (error) throw error;
       return data as TaskConfirmation;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
-    onError: () => toast.error('שגיאה בעדכון האישור'),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
+    onError: (err: unknown) => {
+      const code = (err as { code?: string })?.code;
+      if (code === '23505') return; // already confirmed — unique constraint, not a real error
+      toast.error('שגיאה בעדכון האישור');
+    },
   });
 }
 

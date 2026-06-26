@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   CheckCircle2, Clock, ChevronDown, ChevronUp,
-  GripVertical, StickyNote, AlertCircle, Users,
+  GripVertical, StickyNote, AlertCircle, Users, Copy, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDate, isOverdue } from '@/lib/utils';
@@ -98,10 +98,11 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
                   ? 'bg-emerald-500 border-emerald-500 text-white'
                   : 'border-blue-400 dark:border-blue-500 hover:border-emerald-400'
               )}
-              title={hasConfirmed ? 'בטל אישור' : 'אשר ביצוע'}
             >
               {hasConfirmed && <CheckCircle2 className="w-3 h-3 text-white" />}
             </button>
+          ) : isShared ? (
+            <div className="mt-0.5 shrink-0 w-4 h-4" />
           ) : (
             <button
               onClick={() => onAdvance(task)}
@@ -111,7 +112,6 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
                   ? 'bg-emerald-500 border-emerald-500 text-white'
                   : 'border-slate-300 dark:border-slate-500 hover:border-emerald-400'
               )}
-              title={task.status === 'pending' ? 'התחל ביצוע' : task.status === 'in_progress' ? 'סמן הושלם' : 'פתח מחדש'}
             >
               {task.status === 'done' && <CheckCircle2 className="w-3 h-3 text-white" />}
             </button>
@@ -144,7 +144,7 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
               {formatDate(task.due_date)}
             </span>
           )}
-          {task.notes && <StickyNote className="w-3.5 h-3.5 text-amber-400" title="יש הערות" />}
+          {task.notes && <StickyNote className="w-3.5 h-3.5 text-amber-400" />}
         </div>
 
         {isShared && (
@@ -196,6 +196,17 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
             >
               {hasConfirmed ? 'בוצע' : 'ביצעתי'}
             </button>
+          </div>
+        ) : isShared ? (
+          <div className="flex items-center mt-2 mr-6 pt-2 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex gap-1">
+              <button onClick={() => onDuplicate(task)} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={() => onDelete(task.id)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         ) : (
           <TaskCardActions task={task} onAdvance={onAdvance} onDuplicate={onDuplicate} onDelete={onDelete} />
