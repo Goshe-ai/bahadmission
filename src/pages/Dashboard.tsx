@@ -9,7 +9,7 @@ import {
 import { Plus, RefreshCw } from 'lucide-react';
 import {
   useTasks, useCreateTask, useUpdateTask, useDeleteTask,
-  useDuplicateTask, useAdvanceTaskStatus,
+  useDuplicateTask, useAdvanceTaskStatus, useConfirmTask, useUnconfirmTask,
 } from '@/hooks/useTasks';
 import { useSelectedOfficer } from '@/hooks/useOfficers';
 import { OfficerSelector } from '@/components/OfficerSelector';
@@ -47,6 +47,13 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const deleteTask = useDeleteTask();
   const duplicateTask = useDuplicateTask();
   const advanceStatus = useAdvanceTaskStatus();
+  const confirmTask = useConfirmTask();
+  const unconfirmTask = useUnconfirmTask();
+
+  const handleConfirm = (taskId: string, role: Exclude<OfficerRole, 'all'>) =>
+    confirmTask.mutate({ taskId, officerRole: role });
+  const handleUnconfirm = (taskId: string, role: Exclude<OfficerRole, 'all'>) =>
+    unconfirmTask.mutate({ taskId, officerRole: role });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -83,8 +90,11 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
 
   const columnProps = {
     showOfficer: false,
+    viewerRole: selected !== 'all' ? (selected as Exclude<OfficerRole, 'all'>) : undefined,
     onEdit: openEdit,
     onAdvance: advanceStatus,
+    onConfirm: handleConfirm,
+    onUnconfirm: handleUnconfirm,
     onDuplicate: (t: Task) => duplicateTask.mutate(t),
     onDelete: (id: string) => deleteTask.mutate(id),
   };
@@ -125,6 +135,21 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
 
         {selected === 'all' ? (
           <div className="space-y-6">
+            {(() => {
+              const allTasks = filtered.filter((t) => t.officer_role === 'all');
+              if (allTasks.length === 0) return null;
+              return (
+                <section key="all-tasks">
+                  <h2 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2 border-b border-blue-200 dark:border-blue-800 pb-1">
+                    לכולם ({allTasks.length})
+                  </h2>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <Column title="משימות פתוחות" tasks={allTasks.filter((t) => t.status !== 'done')} {...columnProps} />
+                    <Column title="הושלמו" tasks={allTasks.filter((t) => t.status === 'done')} {...columnProps} />
+                  </div>
+                </section>
+              );
+            })()}
             {OFFICER_ROLES_LIST.map((role) => {
               const roleTasks = filtered.filter((t) => t.officer_role === role);
               if (roleTasks.length === 0) return null;

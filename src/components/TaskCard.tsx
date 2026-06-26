@@ -4,30 +4,47 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   CheckCircle2, Clock, ChevronDown, ChevronUp,
-  GripVertical, StickyNote, AlertCircle,
+  GripVertical, StickyNote, AlertCircle, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDate, isOverdue } from '@/lib/utils';
-import { URGENCY_STRIP, OFFICER_LABELS } from '@/types';
-import type { Task } from '@/types';
+import { URGENCY_STRIP, OFFICER_ROLES_LIST } from '@/types';
+import type { Task, OfficerRole } from '@/types';
 import { UrgencyBadge } from './StatusBadge';
 import { TaskCardActions } from './TaskCardActions';
 
 interface TaskCardProps {
   task: Task;
   showOfficer?: boolean;
+  viewerRole?: Exclude<OfficerRole, 'all'>;
   onEdit: (task: Task) => void;
   onAdvance: (task: Task) => void;
+  onConfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
+  onUnconfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onDuplicate: (task: Task) => void;
   onDelete: (id: string) => void;
 }
 
-export function TaskCard({ task, showOfficer, onEdit, onAdvance, onDuplicate, onDelete }: TaskCardProps) {
+export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onConfirm, onUnconfirm, onDuplicate, onDelete }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const overdue = isOverdue(task.due_date) && task.status !== 'done';
+  const isAllTask = task.officer_role === 'all';
+  const confirmations = task.confirmations ?? [];
+  const confirmCount = confirmations.length;
+  const totalOfficers = OFFICER_ROLES_LIST.length;
+  const hasConfirmed = viewerRole ? confirmations.some((c) => c.officer_role === viewerRole) : false;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
+
+  const handleConfirmToggle = () => {
+    if (!viewerRole) return;
+    if (hasConfirmed) {
+      onUnconfirm?.(task.id, viewerRole);
+    } else {
+      onConfirm?.(task.id, viewerRole);
+    }
+  };
 
   return (
     <motion.div
@@ -44,16 +61,31 @@ export function TaskCard({ task, showOfficer, onEdit, onAdvance, onDuplicate, on
 
       <div className="p-3 pr-4">
         <div className="flex items-start gap-2">
-          <button
-            onClick={() => onAdvance(task)}
-            className={cn(
-              'mt-0.5 shrink-0 w-4 h-4 rounded border-2 transition-colors',
-              task.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-500 hover:border-emerald-400'
-            )}
-            title={task.status === 'pending' ? 'התחל ביצוע' : task.status === 'in_progress' ? 'סמן הושלם' : 'פתח מחדש'}
-          >
-            {task.status === 'done' && <CheckCircle2 className="w-3 h-3 text-white" />}
-          </button>
+          {isAllTask && viewerRole ? (
+            <button
+              onClick={handleConfirmToggle}
+              className={cn(
+                'mt-0.5 shrink-0 w-4 h-4 rounded border-2 transition-colors',
+                hasConfirmed
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'border-blue-400 dark:border-blue-500 hover:border-emerald-400'
+              )}
+              title={hasConfirmed ? 'בטל אישור' : 'אשר ביצוע'}
+            >
+              {hasConfirmed && <CheckCircle2 className="w-3 h-3 text-white" />}
+            </button>
+          ) : (
+            <button
+              onClick={() => onAdvance(task)}
+              className={cn(
+                'mt-0.5 shrink-0 w-4 h-4 rounded border-2 transition-colors',
+                task.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-500 hover:border-emerald-400'
+              )}
+              title={task.status === 'pending' ? 'התחל ביצוע' : task.status === 'in_progress' ? 'סמן הושלם' : 'פתח מחדש'}
+            >
+              {task.status === 'done' && <CheckCircle2 className="w-3 h-3 text-white" />}
+            </button>
+          )}
 
           <div className="flex-1 min-w-0">
             <button
@@ -74,9 +106,15 @@ export function TaskCard({ task, showOfficer, onEdit, onAdvance, onDuplicate, on
 
         <div className="flex flex-wrap items-center gap-1.5 mt-2 mr-6">
           <UrgencyBadge urgency={task.urgency} />
-          {showOfficer && (
+          {isAllTask && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+              <Users className="w-3 h-3" />
+              לכולם
+            </span>
+          )}
+          {showOfficer && !isAllTask && (
             <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-              {OFFICER_LABELS[task.officer_role]}
+              {task.officer_role}
             </span>
           )}
           {task.due_date && (
@@ -89,7 +127,21 @@ export function TaskCard({ task, showOfficer, onEdit, onAdvance, onDuplicate, on
           {task.notes && <StickyNote className="w-3.5 h-3.5 text-amber-400" title="יש הערות" />}
         </div>
 
-        {task.status === 'done' && task.completed_at && (
+        {isAllTask && (
+          <div className="mr-6 mt-2">
+            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <span>{confirmCount}/{totalOfficers} אישרו</span>
+            </div>
+            <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className={cn('h-full rounded-full transition-all duration-300', confirmCount === totalOfficers ? 'bg-emerald-500' : 'bg-blue-400')}
+                style={{ width: `${(confirmCount / totalOfficers) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {task.status === 'done' && task.completed_at && !isAllTask && (
           <div className="mr-6 mt-1 text-xs text-emerald-600 dark:text-emerald-400">הושלם: {formatDate(task.completed_at)}</div>
         )}
 
@@ -113,7 +165,23 @@ export function TaskCard({ task, showOfficer, onEdit, onAdvance, onDuplicate, on
           </div>
         )}
 
-        <TaskCardActions task={task} onAdvance={onAdvance} onDuplicate={onDuplicate} onDelete={onDelete} />
+        {isAllTask && viewerRole ? (
+          <div className="flex justify-end mt-2 mr-6 pt-2 border-t border-slate-100 dark:border-slate-700">
+            <button
+              onClick={handleConfirmToggle}
+              className={cn(
+                'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors',
+                hasConfirmed
+                  ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                  : 'text-white bg-blue-600 hover:bg-blue-700'
+              )}
+            >
+              {hasConfirmed ? 'בוצע' : 'ביצעתי'}
+            </button>
+          </div>
+        ) : (
+          <TaskCardActions task={task} onAdvance={onAdvance} onDuplicate={onDuplicate} onDelete={onDelete} />
+        )}
       </div>
     </motion.div>
   );

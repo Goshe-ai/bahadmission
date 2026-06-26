@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
-import type { Task, TaskFormData, OfficerRole, TaskStatus } from '@/types';
+import type { Task, TaskConfirmation, TaskFormData, OfficerRole, TaskStatus } from '@/types';
 
 const QUERY_KEY = 'tasks';
 
@@ -11,12 +11,12 @@ export function useTasks(officerFilter: OfficerRole) {
     queryFn: async () => {
       let query = supabase
         .from('tasks')
-        .select('*')
+        .select('*, task_confirmations(*)')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (officerFilter !== 'all') {
-        query = query.eq('officer_role', officerFilter);
+        query = query.or(`officer_role.eq.${officerFilter},officer_role.eq.all`);
       }
 
       const { data, error } = await query;
@@ -200,4 +200,37 @@ export function useAdvanceTaskStatus() {
 
     updateTask.mutate({ id: task.id, ...updates });
   };
+}
+
+export function useConfirmTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, officerRole }: { taskId: string; officerRole: Exclude<OfficerRole, 'all'> }) => {
+      const { data, error } = await supabase
+        .from('task_confirmations')
+        .insert({ task_id: taskId, officer_role: officerRole })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as TaskConfirmation;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
+    onError: () => toast.error('שגיאה בעדכון האישור'),
+  });
+}
+
+export function useUnconfirmTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, officerRole }: { taskId: string; officerRole: Exclude<OfficerRole, 'all'> }) => {
+      const { error } = await supabase
+        .from('task_confirmations')
+        .delete()
+        .eq('task_id', taskId)
+        .eq('officer_role', officerRole);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
+    onError: () => toast.error('שגיאה בביטול האישור'),
+  });
 }

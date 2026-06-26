@@ -1,19 +1,22 @@
 import { AnimatePresence } from 'framer-motion';
 import { TaskCard } from './TaskCard';
-import type { Task } from '@/types';
+import type { Task, OfficerRole } from '@/types';
 
 interface ColumnProps {
   title: string;
   tasks: Task[];
   isLoading?: boolean;
   showOfficer: boolean;
+  viewerRole?: Exclude<OfficerRole, 'all'>;
   onEdit: (t: Task) => void;
   onAdvance: (t: Task) => void;
+  onConfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
+  onUnconfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onDuplicate: (t: Task) => void;
   onDelete: (id: string) => void;
 }
 
-export function Column({ title, tasks, isLoading, showOfficer, onEdit, onAdvance, onDuplicate, onDelete }: ColumnProps) {
+export function Column({ title, tasks, isLoading, showOfficer, viewerRole, onEdit, onAdvance, onConfirm, onUnconfirm, onDuplicate, onDelete }: ColumnProps) {
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">{title}</h3>
@@ -34,8 +37,11 @@ export function Column({ title, tasks, isLoading, showOfficer, onEdit, onAdvance
               key={task.id}
               task={task}
               showOfficer={showOfficer}
+              viewerRole={viewerRole}
               onEdit={onEdit}
               onAdvance={onAdvance}
+              onConfirm={onConfirm}
+              onUnconfirm={onUnconfirm}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
             />

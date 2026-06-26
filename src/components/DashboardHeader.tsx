@@ -24,7 +24,7 @@ export function DashboardHeader({ darkMode, onToggleDark, onExportPdf }: Dashboa
         </div>
         <div className="text-right">
           <h1 className="text-lg font-bold">מנהל משימות</h1>
-          <p className="text-xs text-slate-300 font-light">קורס קציני — סמ&quot;פ</p>
+          <p className="text-xs text-slate-300 font-light">קורס קצינים - סמ&quot;פ גושה</p>
         </div>
       </div>
     </header>

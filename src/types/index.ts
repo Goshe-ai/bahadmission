@@ -2,18 +2,39 @@ export type OfficerRole =
   | 'katzin_haganash'
   | 'kamatz'
   | 'kachum'
-  | 'katash'
-  | 'kazahal'
-  | 'kaman'
+  | 'kaar'
+  | 'samaf'
+  | 'kadat'
+  | 'kasimulatzyot'
+  | 'kaimunim'
+  | 'kalaf'
+  | 'kahad'
+  | 'kabat'
+  | 'kamabatz'
+  | 'kaag'
   | 'all';
+
+export interface TaskConfirmation {
+  id: string;
+  task_id: string;
+  officer_role: Exclude<OfficerRole, 'all'>;
+  confirmed_at: string;
+}
 
 export const OFFICER_LABELS: Record<OfficerRole, string> = {
   katzin_haganash: 'ק. הגנ"ש',
   kamatz: 'קמ"צ',
   kachum: 'קחו"ם',
-  katash: 'קת"ש',
-  kazahal: 'קז"ל',
-  kaman: 'קמ"ן',
+  kaar: 'קא"ר',
+  samaf: 'סמ"פ',
+  kadat: 'ק.דת',
+  kasimulatzyot: 'ק.סימולציות',
+  kaimunim: 'ק.אימונים',
+  kalaf: 'קל"פ',
+  kahad: 'קה"ד',
+  kabat: 'קב"ט',
+  kamabatz: 'קמב"צ',
+  kaag: 'קא"ג',
   all: 'כולם',
 };
 
@@ -21,9 +42,16 @@ export const OFFICER_ROLES_LIST: Exclude<OfficerRole, 'all'>[] = [
   'katzin_haganash',
   'kamatz',
   'kachum',
-  'katash',
-  'kazahal',
-  'kaman',
+  'kaar',
+  'samaf',
+  'kadat',
+  'kasimulatzyot',
+  'kaimunim',
+  'kalaf',
+  'kahad',
+  'kabat',
+  'kamabatz',
+  'kaag',
 ];
 
 export type UrgencyLevel = 'critical' | 'high' | 'medium' | 'low';
@@ -54,7 +82,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  officer_role: Exclude<OfficerRole, 'all'>;
+  officer_role: OfficerRole;
   urgency: UrgencyLevel;
   status: TaskStatus;
   due_date?: string;
@@ -63,12 +91,13 @@ export interface Task {
   updated_at: string;
   notes?: string;
   sort_order?: number;
+  confirmations?: TaskConfirmation[];
 }
 
 export interface TaskFormData {
   title: string;
   description: string;
-  officer_role: Exclude<OfficerRole, 'all'>;
+  officer_role: OfficerRole;
   urgency: UrgencyLevel;
   due_date: string;
   notes: string;

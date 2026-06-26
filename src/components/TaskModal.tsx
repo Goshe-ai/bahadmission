@@ -80,8 +80,10 @@ export function TaskModal({ open, task, defaultOfficer, onClose, onSave, isSavin
               <div>
                 <label className={LABEL_CLS}>קצין אחראי</label>
                 <select value={form.officer_role}
-                  onChange={(e) => setForm({ ...form, officer_role: e.target.value as Exclude<OfficerRole, 'all'> })}
+                  onChange={(e) => setForm({ ...form, officer_role: e.target.value as OfficerRole })}
                   className={INPUT_CLS}>
+                  <option value="all">לכולם — משימה לכל הקצינים</option>
+                  <option disabled>──────────────────────</option>
                   {OFFICER_ROLES_LIST.map((r) => <option key={r} value={r}>{OFFICER_LABELS[r]}</option>)}
                 </select>
               </div>
