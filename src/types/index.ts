@@ -7,7 +7,7 @@ export type OfficerRole =
   | 'kadat'
   | 'kasimulatzyot'
   | 'kaimunim'
-  | 'kalaf'
+  | 'kalap'
   | 'kahad'
   | 'kabat'
   | 'kamabatz'
@@ -30,7 +30,7 @@ export const OFFICER_LABELS: Record<OfficerRole, string> = {
   kadat: 'ק.דת',
   kasimulatzyot: 'ק.סימולציות',
   kaimunim: 'ק.אימונים',
-  kalaf: 'קל"פ',
+  kalap: 'קל"פ',
   kahad: 'קה"ד',
   kabat: 'קב"ט',
   kamabatz: 'קמב"צ',
@@ -47,7 +47,7 @@ export const OFFICER_ROLES_LIST: Exclude<OfficerRole, 'all'>[] = [
   'kadat',
   'kasimulatzyot',
   'kaimunim',
-  'kalaf',
+  'kalap',
   'kahad',
   'kabat',
   'kamabatz',
