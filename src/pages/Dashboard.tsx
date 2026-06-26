@@ -18,7 +18,7 @@ import { TaskModal } from '@/components/TaskModal';
 import { TaskFilters, applyFilters } from '@/components/TaskFilters';
 import { StatsCards } from '@/components/StatsCards';
 import { DashboardHeader } from '@/components/DashboardHeader';
-import { OFFICER_LABELS, OFFICER_ROLES_LIST } from '@/types';
+import { OFFICER_ROLES_LIST } from '@/types';
 import type { Task, TaskFormData, OfficerRole } from '@/types';
 import type { FilterState } from '@/components/TaskFilters';
 
@@ -50,8 +50,21 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const confirmTask = useConfirmTask();
   const unconfirmTask = useUnconfirmTask();
 
-  const handleConfirm = (taskId: string, role: Exclude<OfficerRole, 'all'>) =>
-    confirmTask.mutate({ taskId, officerRole: role });
+  const handleConfirm = (taskId: string, role: Exclude<OfficerRole, 'all'>) => {
+    const task = tasks.find((t) => t.id === taskId);
+    confirmTask.mutate({ taskId, officerRole: role }, {
+      onSuccess: () => {
+        if (!task) return;
+        const alreadyConfirmed = (task.confirmations ?? []).length;
+        const totalNeeded = task.officer_roles.includes('all')
+          ? OFFICER_ROLES_LIST.length
+          : task.officer_roles.filter((r) => r !== 'all').length;
+        if (alreadyConfirmed + 1 >= totalNeeded) {
+          completeTask(task);
+        }
+      },
+    });
+  };
   const handleUnconfirm = (taskId: string, role: Exclude<OfficerRole, 'all'>) =>
     unconfirmTask.mutate({ taskId, officerRole: role });
 
@@ -61,8 +74,18 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   );
 
   const filtered = useMemo(() => applyFilters(tasks, filters, selected), [tasks, filters, selected]);
-  const openTasks = filtered.filter((t) => t.status !== 'done');
-  const doneTasks = filtered.filter((t) => t.status === 'done');
+
+  const viewerRole = selected !== 'all' ? (selected as Exclude<OfficerRole, 'all'>) : undefined;
+  const effectivelyDone = (t: Task): boolean => {
+    if (t.status === 'done') return true;
+    if (!viewerRole) return false;
+    const isShared = t.officer_roles.length > 1 || t.officer_roles.includes('all');
+    if (!isShared) return false;
+    return (t.confirmations ?? []).some((c) => c.officer_role === viewerRole);
+  };
+
+  const openTasks = filtered.filter((t) => !effectivelyDone(t));
+  const doneTasks = filtered.filter((t) => effectivelyDone(t));
 
   const handleSave = (data: TaskFormData) => {
     if (editingTask) {
@@ -90,7 +113,7 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
 
   const columnProps = {
     showOfficer: false,
-    viewerRole: selected !== 'all' ? (selected as Exclude<OfficerRole, 'all'>) : undefined,
+    viewerRole,
     onEdit: openEdit,
     onAdvance: advanceStatus,
     onComplete: completeTask,
@@ -134,37 +157,9 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
         </button>
 
         {selected === 'all' ? (
-          <div className="space-y-6">
-            {(() => {
-              const allTasks = filtered.filter((t) => t.officer_roles.includes('all'));
-              if (allTasks.length === 0) return null;
-              return (
-                <section key="shared-all">
-                  <h2 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2 border-b border-blue-200 dark:border-blue-800 pb-1">
-                    לכולם ({allTasks.length})
-                  </h2>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <Column title="משימות פתוחות" tasks={allTasks.filter((t) => t.status !== 'done')} {...columnProps} />
-                    <Column title="הושלמו" tasks={allTasks.filter((t) => t.status === 'done')} {...columnProps} />
-                  </div>
-                </section>
-              );
-            })()}
-            {OFFICER_ROLES_LIST.map((role) => {
-              const roleTasks = filtered.filter((t) => t.officer_roles.includes(role));
-              if (roleTasks.length === 0) return null;
-              return (
-                <section key={role}>
-                  <h2 className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
-                    {OFFICER_LABELS[role]} ({roleTasks.length})
-                  </h2>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <Column title="משימות פתוחות" tasks={roleTasks.filter((t) => t.status !== 'done')} {...columnProps} showOfficer={roleTasks.some(t => t.officer_roles.length > 1)} />
-                    <Column title="הושלמו" tasks={roleTasks.filter((t) => t.status === 'done')} {...columnProps} showOfficer={roleTasks.some(t => t.officer_roles.length > 1)} />
-                  </div>
-                </section>
-              );
-            })}
+          <div className="grid md:grid-cols-2 gap-4">
+            <Column title={`משימות פתוחות (${openTasks.length})`} tasks={openTasks} isLoading={isLoading} {...columnProps} showOfficer />
+            <Column title={`הושלמו (${doneTasks.length})`} tasks={doneTasks} isLoading={isLoading} {...columnProps} showOfficer />
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
