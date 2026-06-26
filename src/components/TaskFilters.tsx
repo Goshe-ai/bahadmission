@@ -1,7 +1,7 @@
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { URGENCY_CONFIG } from '@/types';
-import type { UrgencyLevel, TaskStatus } from '@/types';
+import type { UrgencyLevel } from '@/types';
 
 export interface FilterState {
   search: string;
@@ -108,9 +108,8 @@ export function TaskFilters({ filters, onChange }: TaskFiltersProps) {
   );
 }
 
-export function applyFilters(tasks: import('@/types').Task[], filters: FilterState, officerFilter: import('@/types').OfficerRole): import('@/types').Task[] {
+export function applyFilters(tasks: import('@/types').Task[], filters: FilterState, _officerFilter: import('@/types').OfficerRole): import('@/types').Task[] {
   const urgencyOrder: Record<UrgencyLevel, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-  const statusOrder: Record<TaskStatus, number> = { pending: 0, in_progress: 1, done: 2 };
 
   let result = [...tasks];
 

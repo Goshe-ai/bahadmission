@@ -9,7 +9,7 @@ import {
 import { Plus, RefreshCw } from 'lucide-react';
 import {
   useTasks, useCreateTask, useUpdateTask, useDeleteTask,
-  useDuplicateTask, useAdvanceTaskStatus, useConfirmTask, useUnconfirmTask,
+  useDuplicateTask, useAdvanceTaskStatus, useCompleteTask, useConfirmTask, useUnconfirmTask,
 } from '@/hooks/useTasks';
 import { useSelectedOfficer } from '@/hooks/useOfficers';
 import { OfficerSelector } from '@/components/OfficerSelector';
@@ -46,6 +46,7 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const deleteTask = useDeleteTask();
   const duplicateTask = useDuplicateTask();
   const advanceStatus = useAdvanceTaskStatus();
+  const completeTask = useCompleteTask();
   const confirmTask = useConfirmTask();
   const unconfirmTask = useUnconfirmTask();
 
@@ -92,6 +93,7 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     viewerRole: selected !== 'all' ? (selected as Exclude<OfficerRole, 'all'>) : undefined,
     onEdit: openEdit,
     onAdvance: advanceStatus,
+    onComplete: completeTask,
     onConfirm: handleConfirm,
     onUnconfirm: handleUnconfirm,
     onDuplicate: (t: Task) => duplicateTask.mutate(t),

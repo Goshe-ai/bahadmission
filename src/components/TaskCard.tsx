@@ -19,6 +19,7 @@ interface TaskCardProps {
   viewerRole?: Exclude<OfficerRole, 'all'>;
   onEdit: (task: Task) => void;
   onAdvance: (task: Task) => void;
+  onComplete?: (task: Task) => void;
   onConfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onUnconfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onDuplicate: (task: Task) => void;
@@ -52,7 +53,7 @@ function OfficerBadges({ roles }: { roles: OfficerRole[] }) {
   );
 }
 
-export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onConfirm, onUnconfirm, onDuplicate, onDelete }: TaskCardProps) {
+export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onComplete, onConfirm, onUnconfirm, onDuplicate, onDelete }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   const overdue = isOverdue(task.due_date) && task.status !== 'done';
 
@@ -89,7 +90,7 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
 
       <div className="p-3 pr-4">
         <div className="flex items-start gap-2">
-          {isShared && viewerRole ? (
+          {viewerRole && isShared ? (
             <button
               onClick={handleConfirmToggle}
               className={cn(
@@ -100,6 +101,18 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
               )}
             >
               {hasConfirmed && <CheckCircle2 className="w-3 h-3 text-white" />}
+            </button>
+          ) : viewerRole ? (
+            <button
+              onClick={() => onComplete?.(task)}
+              className={cn(
+                'mt-0.5 shrink-0 w-4 h-4 rounded border-2 transition-colors',
+                task.status === 'done'
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'border-slate-300 dark:border-slate-500 hover:border-emerald-400'
+              )}
+            >
+              {task.status === 'done' && <CheckCircle2 className="w-3 h-3 text-white" />}
             </button>
           ) : isShared ? (
             <div className="mt-0.5 shrink-0 w-4 h-4" />
@@ -183,7 +196,7 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
           </div>
         )}
 
-        {isShared && viewerRole ? (
+        {viewerRole && isShared ? (
           <div className="flex justify-end mt-2 mr-6 pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
               onClick={handleConfirmToggle}
@@ -195,6 +208,20 @@ export function TaskCard({ task, showOfficer, viewerRole, onEdit, onAdvance, onC
               )}
             >
               {hasConfirmed ? 'בוצע' : 'ביצעתי'}
+            </button>
+          </div>
+        ) : viewerRole ? (
+          <div className="flex justify-end mt-2 mr-6 pt-2 border-t border-slate-100 dark:border-slate-700">
+            <button
+              onClick={() => onComplete?.(task)}
+              className={cn(
+                'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors',
+                task.status === 'done'
+                  ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                  : 'text-white bg-blue-600 hover:bg-blue-700'
+              )}
+            >
+              {task.status === 'done' ? 'בוצע' : 'ביצעתי'}
             </button>
           </div>
         ) : isShared ? (

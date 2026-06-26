@@ -57,6 +57,7 @@ export function useCreateTask() {
         id: crypto.randomUUID(),
         title: formData.title,
         description: formData.description || undefined,
+        officer_role: formData.officer_roles[0] ?? 'katzin_haganash',
         officer_roles: formData.officer_roles,
         urgency: formData.urgency,
         status: 'pending',
@@ -201,6 +202,17 @@ export function useAdvanceTaskStatus() {
     }
 
     updateTask.mutate({ id: task.id, ...updates });
+  };
+}
+
+export function useCompleteTask() {
+  const updateTask = useUpdateTask();
+  return (task: Task) => {
+    if (task.status === 'done') {
+      updateTask.mutate({ id: task.id, status: 'pending', completed_at: undefined });
+    } else {
+      updateTask.mutate({ id: task.id, status: 'done', completed_at: new Date().toISOString() });
+    }
   };
 }
 

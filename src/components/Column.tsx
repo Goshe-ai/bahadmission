@@ -10,13 +10,14 @@ interface ColumnProps {
   viewerRole?: Exclude<OfficerRole, 'all'>;
   onEdit: (t: Task) => void;
   onAdvance: (t: Task) => void;
+  onComplete?: (t: Task) => void;
   onConfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onUnconfirm?: (taskId: string, role: Exclude<OfficerRole, 'all'>) => void;
   onDuplicate: (t: Task) => void;
   onDelete: (id: string) => void;
 }
 
-export function Column({ title, tasks, isLoading, showOfficer, viewerRole, onEdit, onAdvance, onConfirm, onUnconfirm, onDuplicate, onDelete }: ColumnProps) {
+export function Column({ title, tasks, isLoading, showOfficer, viewerRole, onEdit, onAdvance, onComplete, onConfirm, onUnconfirm, onDuplicate, onDelete }: ColumnProps) {
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">{title}</h3>
@@ -40,6 +41,7 @@ export function Column({ title, tasks, isLoading, showOfficer, viewerRole, onEdi
               viewerRole={viewerRole}
               onEdit={onEdit}
               onAdvance={onAdvance}
+              onComplete={onComplete}
               onConfirm={onConfirm}
               onUnconfirm={onUnconfirm}
               onDuplicate={onDuplicate}
