@@ -4,6 +4,9 @@
 -- Changelog:
 -- v1.0 — Initial schema: tasks table with urgency, status, officer_role, sort_order
 -- v2.0 — Added task_confirmations table: per-officer confirmation tracking for tasks assigned to 'all'
+-- v3.0 — Added officer_roles text[] to tasks: supports multiple officers per task.
+--         officer_role (single, not null) is kept and will always equal officer_roles[1].
+--         Existing rows are back-filled so officer_roles = ARRAY[officer_role].
 
 create table if not exists tasks (
   id            uuid        primary key default gen_random_uuid(),
@@ -58,3 +61,17 @@ alter table task_confirmations enable row level security;
 
 create policy "Allow all" on task_confirmations
   for all using (true) with check (true);
+
+-- -------------------------------------------------------
+-- v3.0: officer_roles column on tasks
+-- Adds multi-officer support. officer_role (text, not null)
+-- is preserved and always equals officer_roles[1].
+-- Existing rows are back-filled on first run.
+-- -------------------------------------------------------
+
+alter table tasks
+  add column if not exists officer_roles text[] not null default '{}';
+
+update tasks
+  set officer_roles = ARRAY[officer_role]
+  where officer_roles = '{}';

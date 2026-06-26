@@ -16,7 +16,7 @@ export function useTasks(officerFilter: OfficerRole) {
         .order('created_at', { ascending: false });
 
       if (officerFilter !== 'all') {
-        query = query.or(`officer_role.eq.${officerFilter},officer_role.eq.all`);
+        query = query.overlaps('officer_roles', [officerFilter, 'all']);
       }
 
       const { data, error } = await query;
@@ -37,7 +37,8 @@ export function useCreateTask() {
         .insert({
           title: formData.title,
           description: formData.description || undefined,
-          officer_role: formData.officer_role,
+          officer_role: formData.officer_roles[0] ?? 'katzin_haganash',
+          officer_roles: formData.officer_roles,
           urgency: formData.urgency,
           status: 'pending' as TaskStatus,
           due_date: formData.due_date || undefined,
@@ -56,7 +57,7 @@ export function useCreateTask() {
         id: crypto.randomUUID(),
         title: formData.title,
         description: formData.description || undefined,
-        officer_role: formData.officer_role,
+        officer_roles: formData.officer_roles,
         urgency: formData.urgency,
         status: 'pending',
         due_date: formData.due_date || undefined,
@@ -160,7 +161,8 @@ export function useDuplicateTask() {
         .insert({
           title: `${task.title} (עותק)`,
           description: task.description,
-          officer_role: task.officer_role,
+          officer_role: task.officer_roles[0] ?? 'katzin_haganash',
+          officer_roles: task.officer_roles,
           urgency: task.urgency,
           status: 'pending' as TaskStatus,
           due_date: task.due_date,

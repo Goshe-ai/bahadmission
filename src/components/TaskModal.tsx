@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 import { OFFICER_LABELS, OFFICER_ROLES_LIST } from '@/types';
 import type { Task, TaskFormData, OfficerRole } from '@/types';
 import { UrgencyPicker } from './UrgencyPicker';
+import { cn } from '@/lib/utils';
 
 interface TaskModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ interface TaskModalProps {
 const EMPTY_FORM: TaskFormData = {
   title: '',
   description: '',
-  officer_role: 'katzin_haganash',
+  officer_roles: ['katzin_haganash'],
   urgency: 'medium',
   due_date: '',
   notes: '',
@@ -31,15 +32,39 @@ export function TaskModal({ open, task, defaultOfficer, onClose, onSave, isSavin
 
   useEffect(() => {
     setForm(task
-      ? { title: task.title, description: task.description ?? '', officer_role: task.officer_role, urgency: task.urgency, due_date: task.due_date ? task.due_date.slice(0, 16) : '', notes: task.notes ?? '' }
-      : { ...EMPTY_FORM, officer_role: defaultOfficer ?? 'katzin_haganash' }
+      ? {
+          title: task.title,
+          description: task.description ?? '',
+          officer_roles: task.officer_roles,
+          urgency: task.urgency,
+          due_date: task.due_date ? task.due_date.slice(0, 16) : '',
+          notes: task.notes ?? '',
+        }
+      : { ...EMPTY_FORM, officer_roles: defaultOfficer ? [defaultOfficer] : ['katzin_haganash'] }
     );
   }, [task, defaultOfficer, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.title.trim() || form.officer_roles.length === 0) return;
     onSave(form);
+  };
+
+  const isAll = form.officer_roles.includes('all');
+
+  const toggleAll = () => {
+    setForm({ ...form, officer_roles: isAll ? ['katzin_haganash'] : ['all'] });
+  };
+
+  const toggleOfficer = (role: Exclude<OfficerRole, 'all'>) => {
+    const current = form.officer_roles.filter(r => r !== 'all') as Exclude<OfficerRole, 'all'>[];
+    const idx = current.indexOf(role);
+    if (idx === -1) {
+      setForm({ ...form, officer_roles: [...current, role] });
+    } else {
+      const next = current.filter(r => r !== role);
+      if (next.length > 0) setForm({ ...form, officer_roles: next });
+    }
   };
 
   return (
@@ -78,14 +103,55 @@ export function TaskModal({ open, task, defaultOfficer, onClose, onSave, isSavin
               </div>
 
               <div>
-                <label className={LABEL_CLS}>קצין אחראי</label>
-                <select value={form.officer_role}
-                  onChange={(e) => setForm({ ...form, officer_role: e.target.value as OfficerRole })}
-                  className={INPUT_CLS}>
-                  <option value="all">לכולם — משימה לכל הקצינים</option>
-                  <option disabled>──────────────────────</option>
-                  {OFFICER_ROLES_LIST.map((r) => <option key={r} value={r}>{OFFICER_LABELS[r]}</option>)}
-                </select>
+                <label className={LABEL_CLS}>קצינים אחראים</label>
+
+                {/* לכולם toggle */}
+                <button
+                  type="button"
+                  onClick={toggleAll}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg border mb-2 transition-colors',
+                    isAll
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    לכולם
+                  </span>
+                  <span className="text-xs opacity-70">כל הקצינים יצטרכו לאשר</span>
+                </button>
+
+                {/* individual officers grid */}
+                {!isAll && (
+                  <div className="grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto p-0.5">
+                    {OFFICER_ROLES_LIST.map((r) => {
+                      const checked = form.officer_roles.includes(r);
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => toggleOfficer(r)}
+                          className={cn(
+                            'flex items-center gap-2 px-2.5 py-2 text-xs rounded-lg border text-right transition-colors',
+                            checked
+                              ? 'bg-navy-900 border-navy-900 text-white dark:bg-blue-600 dark:border-blue-600'
+                              : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          )}
+                        >
+                          <span className={cn(
+                            'w-3.5 h-3.5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors',
+                            checked ? 'bg-white border-white' : 'border-slate-400 dark:border-slate-500'
+                          )}>
+                            {checked && <span className="w-1.5 h-1.5 bg-navy-900 dark:bg-blue-600 rounded-sm" />}
+                          </span>
+                          {OFFICER_LABELS[r]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -110,7 +176,7 @@ export function TaskModal({ open, task, defaultOfficer, onClose, onSave, isSavin
                   className="flex-1 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                   ביטול
                 </button>
-                <button type="submit" disabled={isSaving || !form.title.trim()}
+                <button type="submit" disabled={isSaving || !form.title.trim() || form.officer_roles.length === 0}
                   className="flex-1 py-2 text-sm font-semibold text-white bg-navy-900 dark:bg-blue-600 rounded-lg hover:bg-slate-700 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   {isSaving ? 'שומר...' : task ? 'עדכן' : 'צור משימה'}
                 </button>

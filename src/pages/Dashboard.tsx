@@ -20,7 +20,6 @@ import { StatsCards } from '@/components/StatsCards';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { OFFICER_LABELS, OFFICER_ROLES_LIST } from '@/types';
 import type { Task, TaskFormData, OfficerRole } from '@/types';
-import { exportTasksToPdf } from '@/lib/exportPdf';
 import type { FilterState } from '@/components/TaskFilters';
 
 const DEFAULT_FILTERS: FilterState = {
@@ -110,8 +109,7 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-heebo" dir="rtl">
-      <DashboardHeader darkMode={darkMode} onToggleDark={onToggleDark}
-        onExportPdf={() => exportTasksToPdf(filtered, `משימות — ${selected === 'all' ? 'כולם' : OFFICER_LABELS[selected]}`)} />
+      <DashboardHeader darkMode={darkMode} onToggleDark={onToggleDark} />
 
       <main className="max-w-5xl mx-auto px-4 py-5 space-y-4">
         {isLoading ? (
@@ -136,10 +134,10 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
         {selected === 'all' ? (
           <div className="space-y-6">
             {(() => {
-              const allTasks = filtered.filter((t) => t.officer_role === 'all');
+              const allTasks = filtered.filter((t) => t.officer_roles.includes('all'));
               if (allTasks.length === 0) return null;
               return (
-                <section key="all-tasks">
+                <section key="shared-all">
                   <h2 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2 border-b border-blue-200 dark:border-blue-800 pb-1">
                     לכולם ({allTasks.length})
                   </h2>
@@ -151,7 +149,7 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
               );
             })()}
             {OFFICER_ROLES_LIST.map((role) => {
-              const roleTasks = filtered.filter((t) => t.officer_role === role);
+              const roleTasks = filtered.filter((t) => t.officer_roles.includes(role));
               if (roleTasks.length === 0) return null;
               return (
                 <section key={role}>
@@ -159,8 +157,8 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
                     {OFFICER_LABELS[role]} ({roleTasks.length})
                   </h2>
                   <div className="grid md:grid-cols-2 gap-3">
-                    <Column title="משימות פתוחות" tasks={roleTasks.filter((t) => t.status !== 'done')} {...columnProps} />
-                    <Column title="הושלמו" tasks={roleTasks.filter((t) => t.status === 'done')} {...columnProps} />
+                    <Column title="משימות פתוחות" tasks={roleTasks.filter((t) => t.status !== 'done')} {...columnProps} showOfficer={roleTasks.some(t => t.officer_roles.length > 1)} />
+                    <Column title="הושלמו" tasks={roleTasks.filter((t) => t.status === 'done')} {...columnProps} showOfficer={roleTasks.some(t => t.officer_roles.length > 1)} />
                   </div>
                 </section>
               );

@@ -82,7 +82,8 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  officer_role: OfficerRole;
+  officer_role: OfficerRole;   // legacy single-officer column; always equals officer_roles[0]
+  officer_roles: OfficerRole[];
   urgency: UrgencyLevel;
   status: TaskStatus;
   due_date?: string;
@@ -97,7 +98,7 @@ export interface Task {
 export interface TaskFormData {
   title: string;
   description: string;
-  officer_role: OfficerRole;
+  officer_roles: OfficerRole[];
   urgency: UrgencyLevel;
   due_date: string;
   notes: string;
