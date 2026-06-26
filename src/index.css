@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Heebo', sans-serif;
+  }
+
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  .bg-navy-900 {
+    background-color: #0f172a;
+  }
+  .dark .bg-navy-900 {
+    background-color: #0f172a;
+  }
+}
