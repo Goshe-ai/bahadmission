@@ -18,6 +18,7 @@ import { TaskModal } from '@/components/TaskModal';
 import { TaskFilters, applyFilters } from '@/components/TaskFilters';
 import { StatsCards } from '@/components/StatsCards';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import { RoleGroupedView } from '@/components/RoleGroupedView';
 import { OFFICER_ROLES_LIST } from '@/types';
 import type { Task, TaskFormData, OfficerRole } from '@/types';
 import type { FilterState } from '@/components/TaskFilters';
@@ -157,10 +158,17 @@ export function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
         </button>
 
         {selected === 'all' ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <Column title={`משימות פתוחות (${openTasks.length})`} tasks={openTasks} isLoading={isLoading} {...columnProps} showOfficer />
-            <Column title={`הושלמו (${doneTasks.length})`} tasks={doneTasks} isLoading={isLoading} {...columnProps} showOfficer />
-          </div>
+          <RoleGroupedView
+            tasks={filtered}
+            isLoading={isLoading}
+            onEdit={openEdit}
+            onAdvance={advanceStatus}
+            onComplete={completeTask}
+            onConfirm={handleConfirm}
+            onUnconfirm={handleUnconfirm}
+            onDuplicate={(t) => duplicateTask.mutate(t)}
+            onDelete={(id) => deleteTask.mutate(id)}
+          />
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <div className="grid md:grid-cols-2 gap-4">

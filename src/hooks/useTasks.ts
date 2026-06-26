@@ -21,7 +21,10 @@ export function useTasks(officerFilter: OfficerRole) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as Task[];
+      return (data ?? []).map((row) => {
+        const { task_confirmations, ...rest } = row as { task_confirmations: TaskConfirmation[]; [key: string]: unknown };
+        return { ...rest, confirmations: task_confirmations ?? [] } as Task;
+      });
     },
     staleTime: 30_000,
   });
